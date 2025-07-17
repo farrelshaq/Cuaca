@@ -35,4 +35,6 @@ class WeatherModel {
       sunrise: json['sys']['sunrise'] ?? 0,
     );
   }
+
+  get userName => null;
 }

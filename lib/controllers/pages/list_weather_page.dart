@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../models/weather_model.dart';
 import 'detail_weather_page.dart';
 
@@ -11,63 +13,46 @@ class ListWeatherPage extends StatefulWidget {
 
 class _ListWeatherPageState extends State<ListWeatherPage> {
   List<WeatherModel> weathers = [];
+  final List<String> cities = ["Jakarta", "Bandung", "Sidoarjo", "Malang", "Bali"];
+  final String apiKey = "719c265d4a9ccf10506442f384482f07";
 
   @override
   void initState() {
     super.initState();
-    // Dummy data sementara
-    weathers = [
-      WeatherModel(
-        cityName: "Jakarta",
-        temperature: 32,
-        description: "Cerah",
-        iconUrl: "http://openweathermap.org/img/wn/01d@2x.png",
-        country: "ID",
-        humidity: 70,
-        windSpeed: 3.5,
-        sunrise: 1715652091,
-),
-      WeatherModel(
-        cityName: "Bandung",
-        temperature: 24,
-        description: "Berawan",
-        iconUrl: "http://openweathermap.org/img/wn/02d@2x.png",
-        country: "ID",
-        humidity: 80,
-        windSpeed: 2.0,
-        sunrise: 1715652091, 
-      ),
-      WeatherModel(
-        cityName: "Sidoarjo",
-        temperature: 36,
-        description: "Panas",
-        iconUrl: "http://openweathermap.org/img/wn/01d@2x.png", 
-        country: 'ID',
-        humidity: 60,
-        windSpeed: 4.0,
-        sunrise: 1715652091,
-      ),
-      WeatherModel(
-        cityName: "Malang",
-        temperature: 19,
-        description: "Sejuk",
-        iconUrl: "http://openweathermap.org/img/wn/03d@2x.png", 
-        country: 'ID',
-        humidity: 50,
-        windSpeed: 4.0,
-        sunrise: 1715652091,
-      ),
-      WeatherModel(
-        cityName: "Bali",
-        temperature: 27,
-        description: "Cerah Berawan",
-        iconUrl: "http://openweathermap.org/img/wn/02d@2x.png",
-        country: "ID",
-        humidity: 76,
-        windSpeed: 3.0,
-        sunrise: 01,
-      ),
-    ];
+    fetchWeatherData();
+  }
+
+  Future<void> fetchWeatherData() async {
+    List<WeatherModel> tempList = [];
+
+    for (String city in cities) {
+      final url =
+          "https://api.openweathermap.org/data/2.5/weather?q=$city&appid=$apiKey&units=metric";
+
+      try {
+        final response = await http.get(Uri.parse(url));
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final model = WeatherModel(
+            cityName: data['name'],
+            temperature: data['main']['temp'].toDouble(),
+            description: data['weather'][0]['description'],
+            iconUrl: "http://openweathermap.org/img/wn/${data['weather'][0]['icon']}@2x.png",
+            country: data['sys']['country'],
+            humidity: data['main']['humidity'].toDouble(),
+            windSpeed: data['wind']['speed'].toDouble(),
+            sunrise: data['sys']['sunrise'],
+          );
+          tempList.add(model);
+        }
+      } catch (e) {
+        print("Error fetching data for $city: $e");
+      }
+    }
+
+    setState(() {
+      weathers = tempList;
+    });
   }
 
   Color getBackgroundColor(double temperature) {
@@ -84,7 +69,12 @@ class _ListWeatherPageState extends State<ListWeatherPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("List Weather")),
+      appBar: AppBar(
+        title: const Text("List Weather",
+            style: TextStyle(color: Color.fromARGB(255, 255, 255, 255))),
+        backgroundColor: const Color.fromARGB(172, 7, 7, 7),
+      ),
+      backgroundColor: const Color.fromRGBO(175, 196, 216, 1),
       body: weathers.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(

@@ -2,27 +2,22 @@ import 'dart:convert';
 import 'package:cuaca/services/weather_api.dart';
 import 'package:http/http.dart' as http;
 import '../models/weather_model.dart';
-import '../services/weather_api.dart';
+import '../services/API/weather_api.dart';
 
-class WeatherController {
-  Future<WeatherModel> fetchWeather() async {
-    double lat = -7.98; // Contoh Malang
-    double lon = 112.63;
+Future<void> fetchWeather() async {
+  const apiKey = '719c265d4a9ccf10506442f384482f07';
+  const city = 'Jakarta';
+  final url = Uri.parse(
+    'https://api.openweathermap.org/data/2.5/weather?q=$city&appid=$apiKey&units=metric',
+  );
 
-    final url = Uri.parse(
-      WeatherApi.getWeatherUrl(lat: lat, lon: lon),
-    );
+  final response = await http.get(url);
 
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final jsonData = jsonDecode(response.body);
-
-      /// ⏩ PAKAI INI SAJA, OTOMATIS
-      return WeatherModel.fromJson(jsonData);
-    } else {
-      throw Exception('Failed to load weather');
-    }
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    print("Suhu di $city: ${data['main']['temp']}°C");
+    print("Cuaca: ${data['weather'][0]['description']}");
+  } else {
+    print("Gagal ambil data: ${response.statusCode}");
   }
-  
 }
